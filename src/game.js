@@ -5,13 +5,13 @@ class TeddyBearGame {
     this.config = config; // { onGameOver: (score, collectedNames) => void, babyNames: string[] }
 
     // Constants
-    this.CANVAS_WIDTH = 800;
-    this.CANVAS_HEIGHT = 600;
+    this.CANVAS_WIDTH = canvas.width;
+    this.CANVAS_HEIGHT = canvas.height;
     this.GRAVITY = 0.5;
     this.JUMP_STRENGTH = -9;
     this.BEAR_SIZE = 60;
     this.OBSTACLE_WIDTH = 80;
-    this.OBSTACLE_SPEED = 2.5;
+    this.OBSTACLE_SPEED = this.CANVAS_WIDTH < 500 ? 2 : 2.5;
     this.GAP_HEIGHT = 250;
 
     // Balloon Colors (Bright & Pastel)
@@ -52,7 +52,7 @@ class TeddyBearGame {
     this.score = 0;
     this.gameStarted = false;
     this.gameOver = false;
-    this.bearY = 250;
+    this.bearY = this.CANVAS_HEIGHT / 2 - this.BEAR_SIZE / 2;
     this.bearVelocity = 0;
     this.obstacles = [];
     this.balloons = [];
@@ -222,8 +222,8 @@ class TeddyBearGame {
     this.ctx.fillRect(0, 0, this.CANVAS_WIDTH, this.CANVAS_HEIGHT);
 
     // Draw clouds (static for now, could be animated)
-    this.drawCloud(100, 100);
-    this.drawCloud(600, 150);
+    this.drawCloud(this.CANVAS_WIDTH * 0.12, 100);
+    this.drawCloud(this.CANVAS_WIDTH * 0.75, 150);
 
     // Draw Bear
     this.drawBear();
@@ -238,7 +238,7 @@ class TeddyBearGame {
     this.ctx.fillStyle = '#fff';
     this.ctx.font = 'bold 32px Arial';
     this.ctx.textAlign = 'left';
-    this.ctx.fillText(`Score: ${this.score}`, 20, 50);
+    this.ctx.fillText(`${this.config.scoreLabel || 'Score'}: ${this.score}`, 20, 50);
   }
 
   drawCloud(x, y) {
@@ -254,40 +254,13 @@ class TeddyBearGame {
     const bearX = this.bearX();
     const bearY = this.bearY;
 
-    // Body
-    this.ctx.fillStyle = '#D4A574';
-    this.ctx.beginPath();
-    this.ctx.arc(bearX + 30, bearY + 45, 25, 0, Math.PI * 2);
-    this.ctx.fill();
-
-    // Head
-    this.ctx.beginPath();
-    this.ctx.arc(bearX + 30, bearY + 25, 20, 0, Math.PI * 2);
-    this.ctx.fill();
-
-    // Ears
-    this.ctx.beginPath();
-    this.ctx.arc(bearX + 18, bearY + 13, 8, 0, Math.PI * 2);
-    this.ctx.arc(bearX + 42, bearY + 13, 8, 0, Math.PI * 2);
-    this.ctx.fill();
-
-    // Face
-    this.ctx.fillStyle = '#8B6F47';
-    this.ctx.beginPath(); // Eyes
-    this.ctx.arc(bearX + 25, bearY + 25, 2, 0, Math.PI * 2);
-    this.ctx.arc(bearX + 35, bearY + 25, 2, 0, Math.PI * 2);
-    this.ctx.fill();
-
-    this.ctx.beginPath(); // Nose
-    this.ctx.arc(bearX + 30, bearY + 30, 1, 0, Math.PI * 2);
-    this.ctx.fill();
-
-    // Arms
-    this.ctx.fillStyle = '#D4A574';
-    this.ctx.beginPath();
-    this.ctx.arc(bearX + 10, bearY + 45, 8, 0, Math.PI * 2);
-    this.ctx.arc(bearX + 50, bearY + 45, 8, 0, Math.PI * 2);
-    this.ctx.fill();
+    // Draw the Bear Emoji
+    this.ctx.globalAlpha = 1.0; // Ensure full opacity
+    this.ctx.fillStyle = '#000000'; // Reset fill style to solid
+    this.ctx.font = '60px Arial';
+    this.ctx.textAlign = 'left';
+    this.ctx.textBaseline = 'middle';
+    this.ctx.fillText('🧸', bearX, bearY + 25);
 
     // Balloon strings
     this.ctx.strokeStyle = '#666';
@@ -316,19 +289,25 @@ class TeddyBearGame {
   }
 
   drawObstacle(obstacle) {
-    // Trunk
-    this.ctx.fillStyle = '#8B4513';
-    this.ctx.fillRect(obstacle.x, 0, this.OBSTACLE_WIDTH, obstacle.gapY);
-    this.ctx.fillRect(obstacle.x, obstacle.gapY + obstacle.gapHeight, this.OBSTACLE_WIDTH, this.CANVAS_HEIGHT);
+    this.ctx.fillStyle = 'rgba(255, 255, 255, 0.9)';
 
-    // Leaves
-    this.ctx.fillStyle = '#228B22';
-    this.ctx.beginPath();
-    this.ctx.arc(obstacle.x + this.OBSTACLE_WIDTH / 2, obstacle.gapY, 30, 0, Math.PI * 2);
-    this.ctx.fill();
-    this.ctx.beginPath();
-    this.ctx.arc(obstacle.x + this.OBSTACLE_WIDTH / 2, obstacle.gapY + obstacle.gapHeight, 30, 0, Math.PI * 2);
-    this.ctx.fill();
+    // Helper to draw a fluffy cloud pillar
+    const drawCloudPillar = (yStart, yEnd) => {
+      const step = 30;
+      for (let y = yStart; y <= yEnd; y += step) {
+        this.ctx.beginPath();
+        // Add some random variation to x to make it look fluffy
+        const xOffset = (Math.sin(y * 0.05) * 10);
+        this.ctx.arc(obstacle.x + this.OBSTACLE_WIDTH / 2 + xOffset, y, 35, 0, Math.PI * 2);
+        this.ctx.fill();
+      }
+    };
+
+    // Top Cloud Pillar
+    drawCloudPillar(-30, obstacle.gapY - 20);
+
+    // Bottom Cloud Pillar
+    drawCloudPillar(obstacle.gapY + obstacle.gapHeight + 20, this.CANVAS_HEIGHT + 30);
   }
 
   drawBalloon(balloon) {

@@ -2,17 +2,29 @@
 
 // Popular baby boy names
 const ENGLISH_BOY_NAMES = [
-    'Liam', 'Noah', 'Oliver', 'Elijah', 'James',
-    'William', 'Benjamin', 'Lucas', 'Henry', 'Theodore',
-    'Jack', 'Levi', 'Alexander', 'Jackson', 'Mateo',
-    // ... more names could be added
+    'Liam', 'Noah', 'Oliver', 'Elijah', 'James', 'William', 'Benjamin', 'Lucas', 'Henry', 'Theodore',
+    'Jack', 'Levi', 'Alexander', 'Jackson', 'Mateo', 'Daniel', 'Michael', 'Mason', 'Sebastian', 'Ethan',
+    'Logan', 'Owen', 'Samuel', 'Jacob', 'Asher', 'Aiden', 'John', 'Joseph', 'Wyatt', 'David',
+    'Leo', 'Luke', 'Julian', 'Hudson', 'Grayson', 'Matthew', 'Ezra', 'Gabriel', 'Carter', 'Isaac',
+    'Jayden', 'Luca', 'Anthony', 'Dylan', 'Lincoln', 'Thomas', 'Maarten', 'Elias', 'Josiah', 'Charles',
+    'Caleb', 'Christopher', 'Ezekiel', 'Miles', 'Jaxon', 'Isaiah', 'Andrew', 'Joshua', 'Nathan', 'Nolan',
+    'Adrian', 'Cameron', 'Santiago', 'Eli', 'Aaron', 'Ryan', 'Angel', 'Cooper', 'Waylon', 'Easton',
+    'Kai', 'Christian', 'Landon', 'Colton', 'Roman', 'Axel', 'Brooks', 'Jonathan', 'Robert', 'Jameson',
+    'Ian', 'Everett', 'Greyson', 'Wesley', 'Jeremiah', 'Hunter', 'Leonardo', 'Jordan', 'Jose', 'Bennett',
+    'Silas', 'Nicholas', 'Parker', 'Beau', 'Weston', 'Austin', 'Connor', 'Carson', 'Dominic', 'Xavier'
 ];
 
 const SPANISH_BOY_NAMES = [
-    'Mateo', 'Santiago', 'Sebastián', 'Matías', 'Diego',
-    'Nicolás', 'Samuel', 'Alejandro', 'Daniel', 'David',
-    'Lucas', 'Gabriel', 'Benjamín', 'Martín', 'Leonardo',
-    // ... more names could be added
+    'Mateo', 'Santiago', 'Sebastián', 'Matías', 'Diego', 'Nicolás', 'Samuel', 'Alejandro', 'Daniel', 'David',
+    'Lucas', 'Gabriel', 'Benjamín', 'Martín', 'Leonardo', 'Tomás', 'Joaquín', 'Adrián', 'Emmanuel', 'Alexander',
+    'Isaac', 'Julián', 'Gael', 'Ángel', 'Thiago', 'Felipe', 'Emilio', 'Agustín', 'Simón', 'Juan',
+    'José', 'Francisco', 'Pedro', 'Pablo', 'Miguel', 'Andrés', 'Javier', 'Fernando', 'Carlos', 'Luis',
+    'Jorge', 'Ricardo', 'Hugo', 'Bruno', 'Manuel', 'Rodrigo', 'Mario', 'Héctor', 'Marcos', 'Rafael',
+    'Sergio', 'Iván', 'Antonio', 'Roberto', 'Eduardo', 'Víctor', 'Alberto', 'Raúl', 'Enrique', 'Gerardo',
+    'Esteban', 'Óscar', 'Guillermo', 'Mariano', 'Alfonso', 'César', 'Rubén', 'Gonzalo', 'Ignacio', 'Jaime',
+    'Vicente', 'Lorenzo', 'Salvador', 'Cristóbal', 'Jesús', 'Ramón', 'Félix', 'Patricio', 'Dante', 'Elías',
+    'Ezequiel', 'Fabián', 'Facundo', 'Gustavo', 'Ismael', 'Joel', 'Leandro', 'Luciano', 'Mauricio', 'Maximiliano',
+    'Nahuel', 'Octavio', 'Paulo', 'Renato', 'Rodrigo', 'Santino', 'Tadeo', 'Valentín', 'Walter', 'Xavier'
 ];
 
 const TEXTS = {
@@ -148,15 +160,30 @@ class App {
     startGame() {
         this.showScreen(this.gameScreen);
 
+        // Responsive Canvas Sizing
+        const isMobile = window.innerWidth < 800;
+        if (isMobile) {
+            // Mobile: Fill width minus padding, height proportional to screen
+            // Use slightly higher height ratio for portrait phones
+            this.canvas.width = window.innerWidth - 30;
+            this.canvas.height = window.innerHeight * 0.75;
+        } else {
+            // Desktop: Fixed size
+            this.canvas.width = 800;
+            this.canvas.height = 600;
+        }
+
         // Destroy previous game instance if exists
         if (this.game) {
             this.game.destroy();
         }
 
         const babyNames = this.language === 'en' ? ENGLISH_BOY_NAMES : SPANISH_BOY_NAMES;
+        const scoreLabel = this.language === 'en' ? 'Score' : 'Puntuación';
 
         this.game = new TeddyBearGame(this.canvas, {
             babyNames,
+            scoreLabel,
             onGameOver: (score, collectedNames) => this.handleGameOver(score, collectedNames)
         });
     }
