@@ -1,9 +1,9 @@
-export class TeddyBearGame {
+class TeddyBearGame {
   constructor(canvas, config) {
     this.canvas = canvas;
     this.ctx = canvas.getContext('2d');
     this.config = config; // { onGameOver: (score, collectedNames) => void, babyNames: string[] }
-    
+
     // Constants
     this.CANVAS_WIDTH = 800;
     this.CANVAS_HEIGHT = 600;
@@ -14,6 +14,18 @@ export class TeddyBearGame {
     this.OBSTACLE_SPEED = 2.5;
     this.GAP_HEIGHT = 250;
 
+    // Balloon Colors (Bright & Pastel)
+    this.BALLOON_COLORS = [
+      '#FF6B9D', // Pink
+      '#87CEEB', // Sky Blue
+      '#FFB6C1', // Light Pink
+      '#9370DB', // Medium Purple
+      '#FFD700', // Gold
+      '#98FB98', // Pale Green
+      '#FFA07A', // Light Salmon
+      '#DDA0DD'  // Plum
+    ];
+
     // State
     this.score = 0;
     this.gameStarted = false;
@@ -23,7 +35,7 @@ export class TeddyBearGame {
     this.obstacles = [];
     this.balloons = [];
     this.collectedNames = []; // Fix: Track collected names locally
-    
+
     // Timers
     this.obstacleTimer = 0;
     this.balloonTimer = 0;
@@ -46,7 +58,7 @@ export class TeddyBearGame {
     this.balloons = [];
     this.collectedNames = [];
     this.obstacleTimer = 0;
-    this.balloonTimer = 0;
+    this.balloonTimer = 2500; // Start almost ready to spawn a balloon (at 3000)
     this.lastTime = 0;
 
     // Bind events
@@ -72,7 +84,7 @@ export class TeddyBearGame {
 
   handleInput(e) {
     e.preventDefault(); // Prevent double firing on some touch devices
-    
+
     if (!this.gameStarted) {
       this.gameStarted = true;
       this.bearVelocity = this.JUMP_STRENGTH;
@@ -122,13 +134,17 @@ export class TeddyBearGame {
     this.obstacleTimer += deltaTime;
     // Difficulty curve
     const obstacleDelay = this.score < 3 ? 3500 : this.score < 8 ? 3000 : 2500;
-    
+
     if (this.obstacleTimer > obstacleDelay) {
       this.obstacleTimer = 0;
+
+      // Dynamic Gap Height: Easier (350) at start, Harder (250) after 5 points
+      const currentGapHeight = this.score < 5 ? 350 : 250;
+
       this.obstacles.push({
         x: this.CANVAS_WIDTH,
-        gapY: Math.random() * (this.CANVAS_HEIGHT - this.GAP_HEIGHT - 100) + 50,
-        gapHeight: this.GAP_HEIGHT,
+        gapY: Math.random() * (this.CANVAS_HEIGHT - currentGapHeight - 100) + 50,
+        gapHeight: currentGapHeight,
         passed: false,
       });
     }
@@ -148,7 +164,7 @@ export class TeddyBearGame {
       // Check if passed
       if (!obstacle.passed && obstacle.x + this.OBSTACLE_WIDTH < this.bearX()) {
         obstacle.passed = true;
-        this.score += 1;
+        // this.score += 1; // Removed: Score is now based on balloons
       }
 
       return obstacle.x > -this.OBSTACLE_WIDTH;
@@ -160,12 +176,18 @@ export class TeddyBearGame {
     if (this.balloonTimer > 3000 && this.config.babyNames.length > 0) {
       this.balloonTimer = 0;
       const randomName = this.config.babyNames[Math.floor(Math.random() * this.config.babyNames.length)];
+      const randomColor = this.BALLOON_COLORS[Math.floor(Math.random() * this.BALLOON_COLORS.length)];
+      // Radius based on name length: min 20, plus 2.5 per character
+      const radius = 20 + (randomName.length * 2.5);
+
       this.balloons.push({
         x: this.CANVAS_WIDTH,
         y: Math.random() * (this.CANVAS_HEIGHT - 100) + 50,
         name: randomName,
         collected: false,
         opacity: 1,
+        color: randomColor,
+        radius: radius
       });
     }
 
@@ -173,14 +195,17 @@ export class TeddyBearGame {
       if (!balloon.collected) {
         balloon.x -= this.OBSTACLE_SPEED * 0.8;
 
-        // Check collection
+        // Check collection (dynamic radius)
         const distance = Math.sqrt(
           Math.pow(balloon.x - (this.bearX() + 30), 2) + Math.pow(balloon.y - this.bearY, 2)
         );
 
-        if (distance < 40) {
+        // Check if distance is less than (bear radius + balloon radius)
+        // Bear is approx 30 radius (checking visually from drawBear)
+        if (distance < (30 + balloon.radius)) {
           balloon.collected = true;
           this.collectedNames.push(balloon.name); // Fix: Add to collected names
+          this.score += 1; // Score incremented on balloon collection
         }
       } else {
         // Animation
@@ -228,7 +253,7 @@ export class TeddyBearGame {
   drawBear() {
     const bearX = this.bearX();
     const bearY = this.bearY;
-    
+
     // Body
     this.ctx.fillStyle = '#D4A574';
     this.ctx.beginPath();
@@ -276,8 +301,8 @@ export class TeddyBearGame {
 
     // Balloons attached to bear
     const balloonColors = ['#FF6B9D', '#87CEEB', '#FFB6C1'];
-    
-     // Draw 3 balloons
+
+    // Draw 3 balloons
     this.drawSimpleBalloon(bearX + 10, bearY - 30, balloonColors[0]);
     this.drawSimpleBalloon(bearX + 30, bearY - 35, balloonColors[1]);
     this.drawSimpleBalloon(bearX + 50, bearY - 30, balloonColors[2]);
@@ -308,23 +333,27 @@ export class TeddyBearGame {
 
   drawBalloon(balloon) {
     if (balloon.collected) {
-        // Popping text
-        this.ctx.fillStyle = `rgba(64, 130, 200, ${balloon.opacity})`;
-        this.ctx.font = 'bold 24px Arial';
-        this.ctx.textAlign = 'center';
-        this.ctx.fillText(balloon.name, balloon.x, balloon.y);
+      // Popping text
+      this.ctx.fillStyle = `rgba(64, 130, 200, ${balloon.opacity})`;
+      this.ctx.font = 'bold 24px Arial';
+      this.ctx.textAlign = 'center';
+      this.ctx.fillText(balloon.name, balloon.x, balloon.y);
     } else {
-        // Floating balloon
-        this.ctx.fillStyle = `rgba(255, 200, 100, ${balloon.opacity})`;
-        this.ctx.beginPath();
-        this.ctx.arc(balloon.x, balloon.y, 15, 0, Math.PI * 2);
-        this.ctx.fill();
+      // Floating balloon
+      this.ctx.globalAlpha = balloon.opacity;
+      this.ctx.fillStyle = balloon.color;
+      this.ctx.beginPath();
+      this.ctx.arc(balloon.x, balloon.y, balloon.radius, 0, Math.PI * 2);
+      this.ctx.fill();
+      this.ctx.globalAlpha = 1.0;
 
-        // Name
-        this.ctx.fillStyle = `rgba(255, 255, 255, ${balloon.opacity})`;
-        this.ctx.font = 'bold 10px Arial';
-        this.ctx.textAlign = 'center';
-        this.ctx.fillText(balloon.name, balloon.x, balloon.y + 3);
+      // Name
+      this.ctx.fillStyle = `rgba(255, 255, 255, ${balloon.opacity})`;
+      this.ctx.font = 'bold 12px Arial';
+      this.ctx.textAlign = 'center';
+      this.ctx.textBaseline = 'middle';
+      this.ctx.fillText(balloon.name, balloon.x, balloon.y);
+      this.ctx.textBaseline = 'alphabetic';
     }
   }
 

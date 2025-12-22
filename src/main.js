@@ -1,4 +1,4 @@
-import { TeddyBearGame } from './game.js';
+// Game class is now global from game.js
 
 // Popular baby boy names
 const ENGLISH_BOY_NAMES = [
@@ -21,14 +21,34 @@ const TEXTS = {
         helpTeddy: 'Help the teddy bear collect name balloons!',
         clickTap: 'Click/Tap to make the teddy bear fly!',
         scoreMessageOne: 'Great job! You scored 1 point! Share your favorite baby name ideas with us.',
-        scoreMessageMany: (score) => `Great job! You scored ${score} points! Share your favorite baby name ideas with us.`
+        scoreMessageMany: (score) => `Great job! You scored ${score} points! Share your favorite baby name ideas with us.`,
+        gameOverTitle: 'Oops! Nap time.',
+        gameOverMessage: 'You hit a cloud! But look at all the names you found for the baby!',
+        scoreLabel: 'Your Score',
+        collectedNamesLabel: 'Collected Names:',
+        playAgain: 'Play Again',
+        saveNames: 'Save Names & Exit',
+        formBadge: 'Baby Name Submission Form',
+        formTitle: 'Help Us Name Our Little One!',
+        formFooter: '❤️ P.S. Thank you all for being a part of our journey!',
+        defaultScoreMessage: "We are so excited to welcome our baby into the world. Share your favorite baby name ideas with us!"
     },
     es: {
         tapToStart: '¡Toca para comenzar!',
         helpTeddy: '¡Ayuda al osito a recoger globos con nombres!',
         clickTap: '¡Haz clic/Toca para hacer volar al osito!',
         scoreMessageOne: '¡Gran trabajo! ¡Obtuviste 1 punto! Compártenos tus ideas de nombres favoritos.',
-        scoreMessageMany: (score) => `¡Gran trabajo! ¡Obtuviste ${score} puntos! Compártenos tus ideas de nombres favoritos.`
+        scoreMessageMany: (score) => `¡Gran trabajo! ¡Obtuviste ${score} puntos! Compártenos tus ideas de nombres favoritos.`,
+        gameOverTitle: '¡Ups! Hora de la siesta.',
+        gameOverMessage: '¡Chocaste con una nube! ¡Pero mira todos los nombres que encontraste para el bebé!',
+        scoreLabel: 'Tu Puntuación',
+        collectedNamesLabel: 'Nombres Recopilados:',
+        playAgain: 'Jugar de Nuevo',
+        saveNames: 'Guardar Nombres y Salir',
+        formBadge: 'Formulario de Envío de Nombres',
+        formTitle: '¡Ayúdanos a Nombrar a Nuestro Pequeño!',
+        formFooter: '❤️ P.D. ¡Gracias a todos por ser parte de nuestro viaje!',
+        defaultScoreMessage: "Estamos muy emocionados de dar la bienvenida a nuestro bebé. ¡Compártenos tus ideas de nombres favoritos!"
     }
 };
 
@@ -52,12 +72,30 @@ class App {
         this.helpTeddyText = document.getElementById('help-teddy-text');
         this.clickTapText = document.getElementById('click-tap-text');
 
+        // New Text Elements
+        this.gameOverTitle = document.getElementById('game-over-title');
+        this.gameOverMessage = document.getElementById('game-over-message');
+        this.scoreLabel = document.getElementById('score-label');
+        this.collectedNamesLabel = document.getElementById('collected-names-label');
+        this.btnPlayAgain = document.getElementById('btn-play-again');
+        this.btnSaveNames = document.getElementById('btn-save-names');
+        this.formBadge = document.getElementById('form-badge');
+        this.formTitle = document.getElementById('form-title');
+        this.formFooter = document.getElementById('form-footer');
+        this.btnFormPlayAgain = document.getElementById('btn-form-play-again');
+
         // State
         this.language = 'en';
         this.game = null;
         this.lastScore = 0;
 
         this.bindEvents();
+
+        // Check for saved language
+        const savedLanguage = localStorage.getItem('teddyGameLang');
+        if (savedLanguage) {
+            this.selectLanguage(savedLanguage);
+        }
     }
 
     bindEvents() {
@@ -75,6 +113,7 @@ class App {
 
     selectLanguage(lang) {
         this.language = lang;
+        localStorage.setItem('teddyGameLang', lang);
         this.updateTexts();
         this.startGame();
     }
@@ -84,6 +123,17 @@ class App {
         this.tapToStartText.textContent = t.tapToStart;
         this.helpTeddyText.textContent = t.helpTeddy;
         this.clickTapText.textContent = t.clickTap;
+
+        this.gameOverTitle.textContent = t.gameOverTitle;
+        this.gameOverMessage.textContent = t.gameOverMessage;
+        this.scoreLabel.textContent = t.scoreLabel;
+        this.collectedNamesLabel.textContent = t.collectedNamesLabel;
+        this.btnPlayAgain.textContent = t.playAgain;
+        this.btnSaveNames.textContent = t.saveNames;
+        this.formBadge.textContent = t.formBadge;
+        this.formTitle.textContent = t.formTitle;
+        this.formFooter.textContent = t.formFooter;
+        this.btnFormPlayAgain.textContent = t.playAgain;
     }
 
     showScreen(screen) {
@@ -141,7 +191,7 @@ class App {
         } else if (score > 1) {
             this.formScoreMessage.textContent = t.scoreMessageMany(score);
         } else {
-            this.formScoreMessage.textContent = "We are so excited to welcome our baby into the world. Share your favorite baby name ideas with us!";
+            this.formScoreMessage.textContent = t.defaultScoreMessage;
         }
 
         this.showScreen(this.nameFormScreen);
