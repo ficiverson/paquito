@@ -129,6 +129,7 @@ button {
   text-align: center;
   position: relative;
   z-index: 10;
+  margin: 2rem 0;
 }
 
 .card.wide {
@@ -239,7 +240,9 @@ button {
 /* Game Over Screen */
 #game-over-screen {
   background: var(--background-gameover);
-  overflow: hidden;
+  overflow-y: auto;
+  justify-content: flex-start;
+  padding: 2rem 0;
 }
 
 .emoji-container {
@@ -431,5 +434,36 @@ button {
   50% {
     transform: translateY(-25%);
     animation-timing-function: cubic-bezier(0, 0, 0.2, 1);
+  }
+}
+
+/* Mobile Adjustments */
+@media (max-width: 600px) {
+  .card {
+    padding: 1.5rem;
+    margin: 1rem 0;
+  }
+
+  .title-large {
+    font-size: 1.5rem;
+  }
+
+  .emoji-large {
+    width: 60px;
+    height: 60px;
+    font-size: 2.5rem;
+  }
+
+  .score-display {
+    padding: 0.75rem;
+    margin-bottom: 1rem;
+  }
+
+  .score-value {
+    font-size: 1.75rem;
+  }
+
+  .names-list {
+    max-height: 200px;
   }
 }
