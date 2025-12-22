@@ -1,0 +1,341 @@
+export class TeddyBearGame {
+  constructor(canvas, config) {
+    this.canvas = canvas;
+    this.ctx = canvas.getContext('2d');
+    this.config = config; // { onGameOver: (score, collectedNames) => void, babyNames: string[] }
+    
+    // Constants
+    this.CANVAS_WIDTH = 800;
+    this.CANVAS_HEIGHT = 600;
+    this.GRAVITY = 0.5;
+    this.JUMP_STRENGTH = -9;
+    this.BEAR_SIZE = 60;
+    this.OBSTACLE_WIDTH = 80;
+    this.OBSTACLE_SPEED = 2.5;
+    this.GAP_HEIGHT = 250;
+
+    // State
+    this.score = 0;
+    this.gameStarted = false;
+    this.gameOver = false;
+    this.bearY = 250;
+    this.bearVelocity = 0;
+    this.obstacles = [];
+    this.balloons = [];
+    this.collectedNames = []; // Fix: Track collected names locally
+    
+    // Timers
+    this.obstacleTimer = 0;
+    this.balloonTimer = 0;
+    this.lastTime = 0;
+
+    this.animationFrameId = null;
+    this.handleInput = this.handleInput.bind(this);
+
+    this.init();
+  }
+
+  init() {
+    // Reset state
+    this.score = 0;
+    this.gameStarted = false;
+    this.gameOver = false;
+    this.bearY = 250;
+    this.bearVelocity = 0;
+    this.obstacles = [];
+    this.balloons = [];
+    this.collectedNames = [];
+    this.obstacleTimer = 0;
+    this.balloonTimer = 0;
+    this.lastTime = 0;
+
+    // Bind events
+    this.canvas.addEventListener('click', this.handleInput);
+    this.canvas.addEventListener('touchstart', this.handleInput, { passive: false });
+
+    // Initial Draw
+    this.draw(0);
+  }
+
+  start() {
+    this.lastTime = performance.now();
+    this.gameLoop(this.lastTime);
+  }
+
+  destroy() {
+    if (this.animationFrameId) {
+      cancelAnimationFrame(this.animationFrameId);
+    }
+    this.canvas.removeEventListener('click', this.handleInput);
+    this.canvas.removeEventListener('touchstart', this.handleInput);
+  }
+
+  handleInput(e) {
+    e.preventDefault(); // Prevent double firing on some touch devices
+    
+    if (!this.gameStarted) {
+      this.gameStarted = true;
+      this.bearVelocity = this.JUMP_STRENGTH;
+      this.start();
+    } else if (!this.gameOver) {
+      this.bearVelocity = this.JUMP_STRENGTH;
+    }
+  }
+
+  gameLoop(currentTime) {
+    if (this.gameOver) return;
+
+    const deltaTime = currentTime - this.lastTime;
+    this.lastTime = currentTime;
+
+    this.update(deltaTime);
+    this.draw();
+
+    if (!this.gameOver) {
+      this.animationFrameId = requestAnimationFrame((time) => this.gameLoop(time));
+    }
+  }
+
+  update(deltaTime) {
+    // Update bear physics
+    this.bearVelocity += this.GRAVITY;
+    this.bearY += this.bearVelocity;
+
+    // Check boundaries
+    if (this.bearY < 0) {
+      this.bearY = 0;
+      this.bearVelocity = 0;
+    }
+    if (this.bearY > this.CANVAS_HEIGHT - this.BEAR_SIZE) {
+      this.endGame();
+      return;
+    }
+
+    // Update Obstacles
+    this.updateObstacles(deltaTime);
+
+    // Update Balloons
+    this.updateBalloons(deltaTime);
+  }
+
+  updateObstacles(deltaTime) {
+    this.obstacleTimer += deltaTime;
+    // Difficulty curve
+    const obstacleDelay = this.score < 3 ? 3500 : this.score < 8 ? 3000 : 2500;
+    
+    if (this.obstacleTimer > obstacleDelay) {
+      this.obstacleTimer = 0;
+      this.obstacles.push({
+        x: this.CANVAS_WIDTH,
+        gapY: Math.random() * (this.CANVAS_HEIGHT - this.GAP_HEIGHT - 100) + 50,
+        gapHeight: this.GAP_HEIGHT,
+        passed: false,
+      });
+    }
+
+    this.obstacles = this.obstacles.filter((obstacle) => {
+      obstacle.x -= this.OBSTACLE_SPEED;
+
+      // Collision Check
+      if (
+        this.bearX() + this.BEAR_SIZE > obstacle.x &&
+        this.bearX() < obstacle.x + this.OBSTACLE_WIDTH &&
+        (this.bearY < obstacle.gapY || this.bearY + this.BEAR_SIZE > obstacle.gapY + obstacle.gapHeight)
+      ) {
+        this.endGame();
+      }
+
+      // Check if passed
+      if (!obstacle.passed && obstacle.x + this.OBSTACLE_WIDTH < this.bearX()) {
+        obstacle.passed = true;
+        this.score += 1;
+      }
+
+      return obstacle.x > -this.OBSTACLE_WIDTH;
+    });
+  }
+
+  updateBalloons(deltaTime) {
+    this.balloonTimer += deltaTime;
+    if (this.balloonTimer > 3000 && this.config.babyNames.length > 0) {
+      this.balloonTimer = 0;
+      const randomName = this.config.babyNames[Math.floor(Math.random() * this.config.babyNames.length)];
+      this.balloons.push({
+        x: this.CANVAS_WIDTH,
+        y: Math.random() * (this.CANVAS_HEIGHT - 100) + 50,
+        name: randomName,
+        collected: false,
+        opacity: 1,
+      });
+    }
+
+    this.balloons = this.balloons.filter((balloon) => {
+      if (!balloon.collected) {
+        balloon.x -= this.OBSTACLE_SPEED * 0.8;
+
+        // Check collection
+        const distance = Math.sqrt(
+          Math.pow(balloon.x - (this.bearX() + 30), 2) + Math.pow(balloon.y - this.bearY, 2)
+        );
+
+        if (distance < 40) {
+          balloon.collected = true;
+          this.collectedNames.push(balloon.name); // Fix: Add to collected names
+        }
+      } else {
+        // Animation
+        balloon.opacity -= 0.05;
+        balloon.y -= 2;
+      }
+      return balloon.opacity > 0;
+    });
+  }
+
+  draw() {
+    // Clear canvas
+    this.ctx.fillStyle = '#4A9FD8';
+    this.ctx.fillRect(0, 0, this.CANVAS_WIDTH, this.CANVAS_HEIGHT);
+
+    // Draw clouds (static for now, could be animated)
+    this.drawCloud(100, 100);
+    this.drawCloud(600, 150);
+
+    // Draw Bear
+    this.drawBear();
+
+    // Draw Obstacles
+    this.obstacles.forEach(obstacle => this.drawObstacle(obstacle));
+
+    // Draw Balloons
+    this.balloons.forEach(balloon => this.drawBalloon(balloon));
+
+    // Draw Score
+    this.ctx.fillStyle = '#fff';
+    this.ctx.font = 'bold 32px Arial';
+    this.ctx.textAlign = 'left';
+    this.ctx.fillText(`Score: ${this.score}`, 20, 50);
+  }
+
+  drawCloud(x, y) {
+    this.ctx.fillStyle = 'rgba(255, 255, 255, 0.3)';
+    this.ctx.beginPath();
+    this.ctx.arc(x, y, 40, 0, Math.PI * 2);
+    this.ctx.arc(x + 40, y - 10, 50, 0, Math.PI * 2);
+    this.ctx.arc(x + 80, y, 40, 0, Math.PI * 2);
+    this.ctx.fill();
+  }
+
+  drawBear() {
+    const bearX = this.bearX();
+    const bearY = this.bearY;
+    
+    // Body
+    this.ctx.fillStyle = '#D4A574';
+    this.ctx.beginPath();
+    this.ctx.arc(bearX + 30, bearY + 45, 25, 0, Math.PI * 2);
+    this.ctx.fill();
+
+    // Head
+    this.ctx.beginPath();
+    this.ctx.arc(bearX + 30, bearY + 25, 20, 0, Math.PI * 2);
+    this.ctx.fill();
+
+    // Ears
+    this.ctx.beginPath();
+    this.ctx.arc(bearX + 18, bearY + 13, 8, 0, Math.PI * 2);
+    this.ctx.arc(bearX + 42, bearY + 13, 8, 0, Math.PI * 2);
+    this.ctx.fill();
+
+    // Face
+    this.ctx.fillStyle = '#8B6F47';
+    this.ctx.beginPath(); // Eyes
+    this.ctx.arc(bearX + 25, bearY + 25, 2, 0, Math.PI * 2);
+    this.ctx.arc(bearX + 35, bearY + 25, 2, 0, Math.PI * 2);
+    this.ctx.fill();
+
+    this.ctx.beginPath(); // Nose
+    this.ctx.arc(bearX + 30, bearY + 30, 1, 0, Math.PI * 2);
+    this.ctx.fill();
+
+    // Arms
+    this.ctx.fillStyle = '#D4A574';
+    this.ctx.beginPath();
+    this.ctx.arc(bearX + 10, bearY + 45, 8, 0, Math.PI * 2);
+    this.ctx.arc(bearX + 50, bearY + 45, 8, 0, Math.PI * 2);
+    this.ctx.fill();
+
+    // Balloon strings
+    this.ctx.strokeStyle = '#666';
+    this.ctx.lineWidth = 1;
+    this.ctx.beginPath();
+    this.ctx.moveTo(bearX + 10, bearY + 45);
+    this.ctx.lineTo(bearX + 10, bearY - 30);
+    this.ctx.moveTo(bearX + 50, bearY + 45);
+    this.ctx.lineTo(bearX + 50, bearY - 30);
+    this.ctx.stroke();
+
+    // Balloons attached to bear
+    const balloonColors = ['#FF6B9D', '#87CEEB', '#FFB6C1'];
+    
+     // Draw 3 balloons
+    this.drawSimpleBalloon(bearX + 10, bearY - 30, balloonColors[0]);
+    this.drawSimpleBalloon(bearX + 30, bearY - 35, balloonColors[1]);
+    this.drawSimpleBalloon(bearX + 50, bearY - 30, balloonColors[2]);
+  }
+
+  drawSimpleBalloon(x, y, color) {
+    this.ctx.fillStyle = color;
+    this.ctx.beginPath();
+    this.ctx.arc(x, y, 12, 0, Math.PI * 2);
+    this.ctx.fill();
+  }
+
+  drawObstacle(obstacle) {
+    // Trunk
+    this.ctx.fillStyle = '#8B4513';
+    this.ctx.fillRect(obstacle.x, 0, this.OBSTACLE_WIDTH, obstacle.gapY);
+    this.ctx.fillRect(obstacle.x, obstacle.gapY + obstacle.gapHeight, this.OBSTACLE_WIDTH, this.CANVAS_HEIGHT);
+
+    // Leaves
+    this.ctx.fillStyle = '#228B22';
+    this.ctx.beginPath();
+    this.ctx.arc(obstacle.x + this.OBSTACLE_WIDTH / 2, obstacle.gapY, 30, 0, Math.PI * 2);
+    this.ctx.fill();
+    this.ctx.beginPath();
+    this.ctx.arc(obstacle.x + this.OBSTACLE_WIDTH / 2, obstacle.gapY + obstacle.gapHeight, 30, 0, Math.PI * 2);
+    this.ctx.fill();
+  }
+
+  drawBalloon(balloon) {
+    if (balloon.collected) {
+        // Popping text
+        this.ctx.fillStyle = `rgba(64, 130, 200, ${balloon.opacity})`;
+        this.ctx.font = 'bold 24px Arial';
+        this.ctx.textAlign = 'center';
+        this.ctx.fillText(balloon.name, balloon.x, balloon.y);
+    } else {
+        // Floating balloon
+        this.ctx.fillStyle = `rgba(255, 200, 100, ${balloon.opacity})`;
+        this.ctx.beginPath();
+        this.ctx.arc(balloon.x, balloon.y, 15, 0, Math.PI * 2);
+        this.ctx.fill();
+
+        // Name
+        this.ctx.fillStyle = `rgba(255, 255, 255, ${balloon.opacity})`;
+        this.ctx.font = 'bold 10px Arial';
+        this.ctx.textAlign = 'center';
+        this.ctx.fillText(balloon.name, balloon.x, balloon.y + 3);
+    }
+  }
+
+  endGame() {
+    this.gameOver = true;
+    if (this.config.onGameOver) {
+      this.config.onGameOver(this.score, this.collectedNames);
+    }
+  }
+
+  bearX() {
+    return 100;
+  }
+}

@@ -1,0 +1,12 @@
+{
+  "name": "teddy-bear-balloon-game",
+  "private": true,
+  "version": "1.0.0",
+  "description": "A vanilla JS game with no build step.",
+  "scripts": {
+    "start": "python3 -m http.server 8000"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC"
+}
