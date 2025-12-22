@@ -5,13 +5,13 @@ class TeddyBearGame {
     this.config = config; // { onGameOver: (score, collectedNames) => void, babyNames: string[] }
 
     // Constants
-    this.CANVAS_WIDTH = 800;
-    this.CANVAS_HEIGHT = 600;
+    this.CANVAS_WIDTH = canvas.width;
+    this.CANVAS_HEIGHT = canvas.height;
     this.GRAVITY = 0.5;
     this.JUMP_STRENGTH = -9;
     this.BEAR_SIZE = 60;
     this.OBSTACLE_WIDTH = 80;
-    this.OBSTACLE_SPEED = 2.5;
+    this.OBSTACLE_SPEED = this.CANVAS_WIDTH < 500 ? 2 : 2.5;
     this.GAP_HEIGHT = 250;
 
     // Balloon Colors (Bright & Pastel)
@@ -52,7 +52,7 @@ class TeddyBearGame {
     this.score = 0;
     this.gameStarted = false;
     this.gameOver = false;
-    this.bearY = 250;
+    this.bearY = this.CANVAS_HEIGHT / 2 - this.BEAR_SIZE / 2;
     this.bearVelocity = 0;
     this.obstacles = [];
     this.balloons = [];
@@ -222,8 +222,8 @@ class TeddyBearGame {
     this.ctx.fillRect(0, 0, this.CANVAS_WIDTH, this.CANVAS_HEIGHT);
 
     // Draw clouds (static for now, could be animated)
-    this.drawCloud(100, 100);
-    this.drawCloud(600, 150);
+    this.drawCloud(this.CANVAS_WIDTH * 0.12, 100);
+    this.drawCloud(this.CANVAS_WIDTH * 0.75, 150);
 
     // Draw Bear
     this.drawBear();

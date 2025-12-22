@@ -160,6 +160,19 @@ class App {
     startGame() {
         this.showScreen(this.gameScreen);
 
+        // Responsive Canvas Sizing
+        const isMobile = window.innerWidth < 800;
+        if (isMobile) {
+            // Mobile: Fill width minus padding, height proportional to screen
+            // Use slightly higher height ratio for portrait phones
+            this.canvas.width = window.innerWidth - 30;
+            this.canvas.height = window.innerHeight * 0.75;
+        } else {
+            // Desktop: Fixed size
+            this.canvas.width = 800;
+            this.canvas.height = 600;
+        }
+
         // Destroy previous game instance if exists
         if (this.game) {
             this.game.destroy();

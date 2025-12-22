@@ -290,6 +290,11 @@ button {
   flex-wrap: wrap;
   gap: 0.5rem;
   justify-content: center;
+  max-height: 250px;
+  /* Limit height */
+  overflow-y: auto;
+  /* Scroll if too many names */
+  padding: 0.5rem;
 }
 
 .name-badge {
