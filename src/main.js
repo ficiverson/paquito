@@ -43,7 +43,8 @@ const TEXTS = {
         formBadge: 'Baby name submission form',
         formTitle: 'Help us name our little one!',
         formFooter: '❤️ P.S. Thank you all for being a part of our journey! You can send as many names as you want. End date for name submission is February 15, 2026',
-        defaultScoreMessage: "We are so excited to welcome our baby into the world. Share your favorite baby name ideas with us!"
+        defaultScoreMessage: "We are so excited to welcome our baby into the world. Share your favorite baby name ideas with us!",
+        gameInfo: 'After playing, you can choose to keep playing or share your favorite names with us!'
     },
     es: {
         tapToStart: '¡Toca para comenzar!',
@@ -60,7 +61,8 @@ const TEXTS = {
         formBadge: 'Formulario de envío de nombres',
         formTitle: '¡Ayúdanos a nombrar a nuestro pequeño!',
         formFooter: '❤️ P.D. ¡Gracias a todos por ser parte de nuestro viaje! Puedes enviar tantos nombres como quieras. Fecha de fin para el envío de nombres el 15 de Febrero de 2026',
-        defaultScoreMessage: "Estamos muy emocionados de dar la bienvenida a nuestro bebé. ¡Compártenos tus ideas de tus nombres favoritos!"
+        defaultScoreMessage: "Estamos muy emocionados de dar la bienvenida a nuestro bebé. ¡Compártenos tus ideas de tus nombres favoritos!",
+        gameInfo: '¡Después de jugar, podrás elegir entre seguir jugando o compartir tus nombres favoritos con nosotros!'
     }
 };
 
@@ -83,6 +85,7 @@ class App {
         this.tapToStartText = document.getElementById('tap-to-start-text');
         this.helpTeddyText = document.getElementById('help-teddy-text');
         this.clickTapText = document.getElementById('click-tap-text');
+        this.gameInfoText = document.getElementById('game-info-text');
 
         // New Text Elements
         this.gameOverTitle = document.getElementById('game-over-title');
@@ -135,6 +138,7 @@ class App {
         this.tapToStartText.textContent = t.tapToStart;
         this.helpTeddyText.textContent = t.helpTeddy;
         this.clickTapText.textContent = t.clickTap;
+        this.gameInfoText.textContent = t.gameInfo;
 
         this.gameOverTitle.textContent = t.gameOverTitle;
         this.gameOverMessage.textContent = t.gameOverMessage;
